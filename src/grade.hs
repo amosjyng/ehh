@@ -5,19 +5,32 @@ import System.Environment
 import Data.List.Split
 import Data.Char
 
--- DATA STRUCTURES
-
--- | Every Word is a String
-type Word = String
 
 -- | Convert an entire string to lowercase
-toLowerStrings :: [String] -> [String]
-toLowerStrings = map $ map toLower
+toLowerStr :: String -> String
+toLowerStr = map toLower
 
--- | If the first two letters of each word are swapped, returns minimum edit
--- distance of the rest of the words. If the first two letters are not swapped, 
--- returns maxBound to ignore the swap
-swapDistance :: Word -> Word -> Int
+-- | Every Word is a String with a location
+data Word = Word String (Int, Int) deriving (Show)
+
+-- | Get the String that forms the Word
+wordStr :: Word -> String
+wordStr (Word str _) = str
+
+-- | Two Words are equal if their strings (and not necessarily locations) are
+-- equal
+instance Eq Word where
+        Word a _ == Word b _ = a == b
+
+-- | Split a sentence into lowercase Words delimited by spaces and punctuation
+splitIntoWords :: String -> [Word]
+splitIntoWords sentence = map (\t -> Word (toLowerStr t) (1,1)) tokens
+        where tokens = split (condense $ oneOf " .") sentence
+
+-- | If the first two letters of each string are swapped, returns minimum edit
+-- distance of the rest of the strings. If the first two letters are not 
+-- swapped, returns maxBound to ignore the swap
+swapDistance :: String -> String -> Int
 swapDistance word1 word2
         | length word1 < 2 || length word2 < 2 = maxBound -- ignore the swap
         | (word1 !! 0 == word2 !! 1) && (word1 !! 1 == word2 !! 0) =
@@ -25,8 +38,8 @@ swapDistance word1 word2
                 editDistance (drop 2 word1) (drop 2 word2)
         | otherwise = maxBound -- not a swap, so ignore this
 
--- | Get the Damerau-Levenshtein distance between two words
-editDistance :: Word -> Word -> Int
+-- | Get the Damerau-Levenshtein distance between two strings
+editDistance :: String -> String -> Int
 editDistance word1 word2
         | word1 == word2 = 0
         | null word1 = length word2
@@ -41,11 +54,11 @@ editDistance word1 word2
 -- | Check if both words in a tuple are exact matches. If not, check that
 -- 1. The first word is not in the dictionary words, and
 -- 2. The first word is within 1 edit distance of the second
-wordsMatch :: [Word] -> (Word, Word) -> Bool
+wordsMatch :: [String] -> (Word, Word) -> Bool
 wordsMatch dictionaryWords wordPair
         | correctWord == studentWord = True
-        | studentWord `elem` dictionaryWords = False
-        | otherwise = editDistance correctWord studentWord == 1
+        | wordStr studentWord `elem` dictionaryWords = False
+        | otherwise = editDistance (wordStr correctWord) (wordStr studentWord) == 1
         where correctWord = fst wordPair
               studentWord = snd wordPair
 
@@ -57,7 +70,7 @@ main :: IO ()
 main = do
         args <- getArgs
         dict <- readFile $ args !! 2
-        let correctAnswer = toLowerStrings $ splitOn " " $ args !! 0
-        let studentAnswer = toLowerStrings $ splitOn " " $ args !! 1
-        let dictWords = toLowerStrings $ lines dict
+        let correctAnswer = splitIntoWords $ args !! 0
+        let studentAnswer = splitIntoWords $ args !! 1
+        let dictWords = map toLowerStr $ lines dict
         print $ all (wordsMatch dictWords) $ zip correctAnswer studentAnswer
