@@ -2,8 +2,10 @@ module Main (main) where
 
 import System.IO
 import System.Environment
+import Data.List (find)
 import Data.List.Split
 import Data.Char
+import Data.Maybe (isNothing, fromJust)
 
 
 -- | Convert an entire string to lowercase
@@ -11,14 +13,25 @@ toLowerStr :: String -> String
 toLowerStr = map toLower
 
 -- | How does this word compare to the gold standard word?
-data Result = Perfect | Typo | Missing | WrongWord deriving (Eq)
+data Result = Perfect | Typo | Missing | Extra | WrongWord deriving (Eq)
 
 -- | Print a result like in the examples
 instance Show Result where
         show Perfect = "None"
         show Typo = "typo"
         show Missing = "missing"
+        show Extra = "extra"
         show WrongWord = "wrong_word"
+
+-- | Tells you whether a certain type of error is fine to have
+isFine :: Result -> Bool
+isFine r = r == Perfect || r == Typo
+
+-- | Highlight corresponding portions of expected and user text
+type Highlight = ((Int, Int), (Int, Int))
+
+-- | Every Result other than Perfect should have a highlight to go with it
+type ResultHighlight = (Result, Maybe Highlight) 
 
 -- | Every Word is a String with a location
 data Word = Word String (Int, Int) deriving (Show)
@@ -83,7 +96,7 @@ editDistance word1 word2
 --
 -- If there's anything of note (typo, etc.) the highlight will contain the range
 -- of the interesting part
-wordsMatch :: [String] -> (Word, Word) -> (Result, Maybe ((Int, Int), (Int, Int)))
+wordsMatch :: [String] -> (Word, Word) -> ResultHighlight
 wordsMatch dictionaryWords wordPair
         | correctWord == studentWord = (Perfect, Nothing)
         | wordStr studentWord `elem` dictionaryWords =
@@ -94,6 +107,22 @@ wordsMatch dictionaryWords wordPair
         where correctWord = fst wordPair
               studentWord = snd wordPair
               highlight = (range correctWord, range studentWord)
+
+-- | Collect all highlights of a certain type
+collectHighlights :: Result -> [ResultHighlight] -> [Highlight]
+collectHighlights r = (map (fromJust. snd)) . (filter (\rh -> fst rh == r))
+
+-- | Find the most relevant highlights to show
+findRelevantHighlights :: [ResultHighlight] -> (Result, [Highlight])
+findRelevantHighlights highlights
+        | isNothing imperfects = (Perfect, [])
+        | otherwise = fromJust imperfects
+        where typos = (Typo, collectHighlights Typo highlights)
+              missings = (Missing, collectHighlights Missing highlights)
+              extras = (Extra, collectHighlights Extra highlights)
+              wrongs = (WrongWord, collectHighlights WrongWord highlights)
+              imperfects = find (not . null . snd)
+                                [missings, extras, wrongs, typos]
 
 -- | From commandline arguments, see if the student answer reasonably matches
 -- the expected correct answer.
@@ -108,4 +137,7 @@ main = do
         let dictWords = map toLowerStr $ lines dict
         let results = map (wordsMatch dictWords)
                         $ zip correctAnswer studentAnswer
-        print $ filter (\r -> fst r /= Perfect) results
+        let relevantHighlights = findRelevantHighlights results
+        print $ ((all isFine $ map fst results),
+                 (fst relevantHighlights),
+                 (snd relevantHighlights)) 
