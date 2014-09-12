@@ -14,7 +14,18 @@ type Word = String
 toLowerStrings :: [String] -> [String]
 toLowerStrings = map $ map toLower
 
--- | Get the Levenshtein distance between two words
+-- | If the first two letters of each word are swapped, returns minimum edit
+-- distance of the rest of the words. If the first two letters are not swapped, 
+-- returns maxBound to ignore the swap
+swapDistance :: Word -> Word -> Int
+swapDistance word1 word2
+        | length word1 < 2 || length word2 < 2 = maxBound -- ignore the swap
+        | (word1 !! 0 == word2 !! 1) && (word1 !! 1 == word2 !! 0) =
+                -- just return editDistance because +1 handled by editDistance
+                editDistance (drop 2 word1) (drop 2 word2)
+        | otherwise = maxBound -- not a swap, so ignore this
+
+-- | Get the Damerau-Levenshtein distance between two words
 editDistance :: Word -> Word -> Int
 editDistance word1 word2
         | word1 == word2 = 0
@@ -24,7 +35,8 @@ editDistance word1 word2
         | otherwise =
                 1 + minimum [editDistance word1 (tail word2), -- add
                              editDistance (tail word1) word2, -- delete
-                             editDistance (tail word1) (tail word2)] -- replace
+                             editDistance (tail word1) (tail word2), -- replace
+                             swapDistance word1 word2] -- swap
 
 -- | Check if both words in a tuple are exact matches. If not, check that
 -- 1. The first word is not in the dictionary words, and
@@ -32,7 +44,7 @@ editDistance word1 word2
 wordsMatch :: [Word] -> (Word, Word) -> Bool
 wordsMatch dictionaryWords wordPair
         | correctWord == studentWord = True
-        | elem studentWord dictionaryWords = False
+        | studentWord `elem` dictionaryWords = False
         | otherwise = editDistance correctWord studentWord == 1
         where correctWord = fst wordPair
               studentWord = snd wordPair
