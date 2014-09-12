@@ -22,9 +22,21 @@ wordStr (Word str _) = str
 instance Eq Word where
         Word a _ == Word b _ = a == b
 
+-- | Creates a list of Words one token at a time
+formWordList :: (Bool, Int, [Word]) -> String -> (Bool, Int, [Word])
+formWordList (delimiter, startPos, wordList) token
+        | delimiter = (not delimiter, startPos + l, wordList)
+        | otherwise = (not delimiter, startPos + l,
+                       wordList ++ [Word token (startPos, startPos + l)])
+        where l = length token
+
+-- | Get the third element of a tuple
+third :: (a, b, c) -> c
+third (_, _, z) = z
+
 -- | Split a sentence into lowercase Words delimited by spaces and punctuation
 splitIntoWords :: String -> [Word]
-splitIntoWords sentence = map (\t -> Word (toLowerStr t) (1,1)) tokens
+splitIntoWords sentence = third $ foldl formWordList (False, 0, []) tokens
         where tokens = split (condense $ oneOf " .") sentence
 
 -- | If the first two letters of each string are swapped, returns minimum edit
