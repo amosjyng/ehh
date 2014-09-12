@@ -110,7 +110,7 @@ wordsMatch dictionaryWords wordPair
 
 -- | Collect all highlights of a certain type
 collectHighlights :: Result -> [ResultHighlight] -> [Highlight]
-collectHighlights r = (map (fromJust. snd)) . (filter (\rh -> fst rh == r))
+collectHighlights r = map (fromJust . snd) . filter (\rh -> fst rh == r)
 
 -- | Find the most relevant highlights to show
 findRelevantHighlights :: [ResultHighlight] -> (Result, [Highlight])
@@ -138,6 +138,5 @@ main = do
         let results = map (wordsMatch dictWords)
                         $ zip correctAnswer studentAnswer
         let relevantHighlights = findRelevantHighlights results
-        print $ ((all isFine $ map fst results),
-                 (fst relevantHighlights),
-                 (snd relevantHighlights)) 
+        print (all isFine $ map fst results, fst relevantHighlights,
+               snd relevantHighlights) 
