@@ -1,0 +1,6 @@
+.project
+.settings
+.dist-buildwrapper
+cabal.sandbox.config
+.cabal-sandbox
+dist
