@@ -10,12 +10,26 @@ import Data.Char
 toLowerStr :: String -> String
 toLowerStr = map toLower
 
+-- | How does this word compare to the gold standard word?
+data Result = Perfect | Typo | Missing | WrongWord deriving (Eq)
+
+-- | Print a result like in the examples
+instance Show Result where
+        show Perfect = "None"
+        show Typo = "typo"
+        show Missing = "missing"
+        show WrongWord = "wrong_word"
+
 -- | Every Word is a String with a location
 data Word = Word String (Int, Int) deriving (Show)
 
 -- | Get the String that forms the Word
 wordStr :: Word -> String
 wordStr (Word str _) = str
+
+-- | Get the range of the word in the sentence
+range :: Word -> (Int, Int)
+range (Word _ r) = r
 
 -- | Two Words are equal if their strings (and not necessarily locations) are
 -- equal
@@ -66,13 +80,20 @@ editDistance word1 word2
 -- | Check if both words in a tuple are exact matches. If not, check that
 -- 1. The first word is not in the dictionary words, and
 -- 2. The first word is within 1 edit distance of the second
-wordsMatch :: [String] -> (Word, Word) -> Bool
+--
+-- If there's anything of note (typo, etc.) the highlight will contain the range
+-- of the interesting part
+wordsMatch :: [String] -> (Word, Word) -> (Result, Maybe ((Int, Int), (Int, Int)))
 wordsMatch dictionaryWords wordPair
-        | correctWord == studentWord = True
-        | wordStr studentWord `elem` dictionaryWords = False
-        | otherwise = editDistance (wordStr correctWord) (wordStr studentWord) == 1
+        | correctWord == studentWord = (Perfect, Nothing)
+        | wordStr studentWord `elem` dictionaryWords =
+                (WrongWord, Just highlight)
+        | editDistance (wordStr correctWord) (wordStr studentWord) == 1 =
+                (Typo, Just highlight)
+        | otherwise = (WrongWord, Just highlight)
         where correctWord = fst wordPair
               studentWord = snd wordPair
+              highlight = (range correctWord, range studentWord)
 
 -- | From commandline arguments, see if the student answer reasonably matches
 -- the expected correct answer.
@@ -85,4 +106,6 @@ main = do
         let correctAnswer = splitIntoWords $ args !! 0
         let studentAnswer = splitIntoWords $ args !! 1
         let dictWords = map toLowerStr $ lines dict
-        print $ all (wordsMatch dictWords) $ zip correctAnswer studentAnswer
+        let results = map (wordsMatch dictWords)
+                        $ zip correctAnswer studentAnswer
+        print $ filter (\r -> fst r /= Perfect) results
