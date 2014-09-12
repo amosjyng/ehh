@@ -20,18 +20,22 @@ editDistance word1 word2
                              editDistance (tail word1) (tail word2)] -- replace
 
 -- | Check if both words in a tuple match each other
-wordsMatch :: (Word, Word) -> Bool
-wordsMatch wordPair
+wordsMatch :: [Word] -> (Word, Word) -> Bool
+wordsMatch dictionaryWords wordPair
         | correctWord == studentWord = True
+        | elem studentWord dictionaryWords = False
         | otherwise = editDistance correctWord studentWord == 1
         where correctWord = fst wordPair
               studentWord = snd wordPair
 
 -- | From commandline arguments, see if the student answer reasonably matches
--- the expected correct answer
+-- the expected correct answer.
+--
+-- Usage: grade <correct answer> <student answer> <dictionary file>
 main :: IO ()
 main = do
         args <- getArgs
-        let correctAnswer = splitOn " " $ head args
-        let studentAnswer = splitOn " " $ last args
-        print $ all wordsMatch $ zip correctAnswer studentAnswer
+        dict <- readFile $ args !! 2
+        let correctAnswer = splitOn " " $ args !! 0
+        let studentAnswer = splitOn " " $ args !! 1
+        print $ all (wordsMatch $ lines dict) $ zip correctAnswer studentAnswer
