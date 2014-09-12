@@ -1,13 +1,20 @@
+module Main (main) where
+
 import System.IO
 import System.Environment
 import Data.List.Split
+import Data.Char
 
 -- DATA STRUCTURES
 
 -- | Every Word is a String
 type Word = String
 
--- | Get the edit distance between two words
+-- | Convert an entire string to lowercase
+toLowerStrings :: [String] -> [String]
+toLowerStrings = map $ map toLower
+
+-- | Get the Levenshtein distance between two words
 editDistance :: Word -> Word -> Int
 editDistance word1 word2
         | word1 == word2 = 0
@@ -19,7 +26,9 @@ editDistance word1 word2
                              editDistance (tail word1) word2, -- delete
                              editDistance (tail word1) (tail word2)] -- replace
 
--- | Check if both words in a tuple match each other
+-- | Check if both words in a tuple are exact matches. If not, check that
+-- 1. The first word is not in the dictionary words, and
+-- 2. The first word is within 1 edit distance of the second
 wordsMatch :: [Word] -> (Word, Word) -> Bool
 wordsMatch dictionaryWords wordPair
         | correctWord == studentWord = True
@@ -36,6 +45,7 @@ main :: IO ()
 main = do
         args <- getArgs
         dict <- readFile $ args !! 2
-        let correctAnswer = splitOn " " $ args !! 0
-        let studentAnswer = splitOn " " $ args !! 1
-        print $ all (wordsMatch $ lines dict) $ zip correctAnswer studentAnswer
+        let correctAnswer = toLowerStrings $ splitOn " " $ args !! 0
+        let studentAnswer = toLowerStrings $ splitOn " " $ args !! 1
+        let dictWords = toLowerStrings $ lines dict
+        print $ all (wordsMatch dictWords) $ zip correctAnswer studentAnswer
