@@ -28,7 +28,12 @@ main = do
                 it "Multiple words should pass" $ do
                         grade dictWords "A house" "a house."
                                 `shouldBe` (True, Perfect, [])
-                        grade dictWords "Yet\" \" ??another house!" "yeT,ANOTHER.\"HoUSE"
+                        grade dictWords "Yet\" \" ??another house!"
+                                        "yeT,ANOTHER.\"HoUSE"
+                                `shouldBe` (True, Perfect, [])
+                it "Should have Unicode support" $
+                        grade dictWords "über is not English"
+                                        "über is not English"
                                 `shouldBe` (True, Perfect, [])
         describe "Validate typo answers" $ do
                 it "An edit distance of 1 should be acceptable" $ do
@@ -46,14 +51,19 @@ main = do
                 it "Multiple typos should all be recorded" $
                         grade dictWords "This is my house!" " this is, mp hhouse."
                                 `shouldBe` (True, Typo, [((8,10),(10,12)),((11,16),(13,19))])
+                it "Should have Unicode support" $
+                        grade dictWords "über is not English" "übr is not English"
+                                `shouldBe` (True, Typo, [((0,4),(0,3))])
         describe "Invalidate wrong word answers" $ do
                 it "A completely different word should be wrong" $ do
                         grade dictWords "This is my house." "this is your house!"
                                 `shouldBe` (False, WrongWord, [((8,10),(8,12))])
                         grade dictWords "This is my house." "this is mpr house!"
                                 `shouldBe` (False, WrongWord, [((8,10),(8,11))])
-                it "Two wrong words means nothing is highlighted" $
+                it "More than one wrong word means nothing is highlighted" $ do
                         grade dictWords "That is my house." "This is your house!"
+                                `shouldBe` (False, Perfect, [])
+                        grade dictWords "That is my house." "This is your horse!"
                                 `shouldBe` (False, Perfect, [])
                 it "A similar word that is also valid is wrong" $
                         grade dictWords "It's my house." "Its my house!"
@@ -61,3 +71,7 @@ main = do
                 it "When a wrong word exists, ignore any typos" $
                         grade dictWords "It's my house" "It's mp horse"
                                 `shouldBe` (False, WrongWord, [((8,13),(8,13))])
+                it "Should have Unicode support" $
+                        grade dictWords "über is not English"
+                                        "über is not Engrsh"
+                                `shouldBe` (False, WrongWord, [((12,19),(12,18))])
