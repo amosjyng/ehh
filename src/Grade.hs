@@ -89,23 +89,21 @@ editDistance word1 word2
                              editDistance (tail word1) (tail word2), -- replace
                              swapDistance word1 word2] -- swap
 
--- | Check if both words in a tuple are exact matches. If not, check that
+-- | Check if both words are exact matches. If not, check that
 -- 1. The first word is not in the dictionary words, and
 -- 2. The first word is within 1 edit distance of the second
 --
 -- If there's anything of note (typo, etc.) the highlight will contain the range
 -- of the interesting part
-wordsMatch :: [String] -> (Word, Word) -> ResultHighlight
-wordsMatch dictionaryWords wordPair
+wordsMatch :: [String] -> Word -> Word -> ResultHighlight
+wordsMatch dictionaryWords correctWord studentWord
         | correctWord == studentWord = (Perfect, Nothing)
         | wordStr studentWord `elem` dictionaryWords =
                 (WrongWord, Just highlight)
         | editDistance (wordStr correctWord) (wordStr studentWord) == 1 =
                 (Typo, Just highlight)
         | otherwise = (WrongWord, Just highlight)
-        where correctWord = fst wordPair
-              studentWord = snd wordPair
-              highlight = (range correctWord, range studentWord)
+        where highlight = (range correctWord, range studentWord)
 
 -- | Collect all highlights of a certain type
 collectHighlights :: Result -> [ResultHighlight] -> [Highlight]
@@ -129,6 +127,5 @@ grade dictWords correctAnswer studentAnswer =
         (all isFine $ map fst results, fst highlights, snd highlights)
         where correctTokens = splitIntoWords correctAnswer
               studentTokens = splitIntoWords studentAnswer
-              results = map (wordsMatch dictWords)
-                      $ zip correctTokens studentTokens
+              results = zipWith (wordsMatch dictWords) correctTokens studentTokens
               highlights = findRelevantHighlights results
