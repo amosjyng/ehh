@@ -34,5 +34,9 @@ main = do
 		it "An edit distance of 1 should be acceptable" $ do
 			grade dictWords "house" "hhouse"
 				`shouldBe` (True, Typo, [((0,5),(0,6))])
+		it "Punctuation should be ignored in typos" $ do
 			grade dictWords "`house?!" "\"hhouse:"
 				`shouldBe` (True, Typo, [((1,6),(1,7))])
+		it "Multiple typos should all be recorded" $
+			grade dictWords "This is my house!" " this is, mp hhouse."
+				`shouldBe` (True, Typo, [((8,10),(10,12)),((11,16),(13,19))])

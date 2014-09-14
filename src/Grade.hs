@@ -124,6 +124,10 @@ findRelevantHighlights highlights
               imperfects = find (not . null . snd)
                                 [missings, extras, wrongs, typos]
 
+-- | Given a list of words in the English language, an expected string, and an
+-- actual student string, return a tuple indicating whether the student answer
+-- matches the correct answer within acceptable bounds, what kind of mistakes
+-- were made (if any), and where the mistakes are located
 grade :: [String] -> String -> String -> (Bool, Result, [Highlight])
 grade dictWords correctAnswer studentAnswer =
         (all isFine $ map fst results, fst highlights, snd highlights)
