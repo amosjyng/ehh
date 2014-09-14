@@ -61,8 +61,9 @@ third (_, _, z) = z
 
 -- | Split a sentence into lowercase Words delimited by spaces and punctuation
 splitIntoWords :: String -> [Word]
-splitIntoWords sentence = third $ foldl formWordList (False, 0, []) tokens
-        where tokens = split (condense $ oneOf " .") sentence
+splitIntoWords sentence = filter (not . null . wordStr) sentenceWords
+        where tokens = split (condense $ oneOf "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~") sentence
+	      sentenceWords = third $ foldl formWordList (False, 0, []) tokens
 
 -- | If the first two letters of each string are swapped, returns minimum edit
 -- distance of the rest of the strings. If the first two letters are not 

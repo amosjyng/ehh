@@ -8,7 +8,22 @@ main = do
         dict <- readFile "dict.txt"
         let dictWords = map toLowerStr $ lines dict
 	hspec $ do
-        describe "Validate passing answers" $ do
-                it "Match should be verified exactly" $ do
+        describe "Validate perfect answers" $ do
+                it "The exact same word should pass" $ do
                         grade dictWords "house" "house"
-                              `shouldBe` (True, Perfect, [])
+				`shouldBe` (True, Perfect, [])
+		it "The exact same word with punctuation should pass" $ do
+			grade dictWords "house." "house"
+				`shouldBe` (True, Perfect, [])
+			grade dictWords "house" "house,"
+				`shouldBe` (True, Perfect, [])
+			grade dictWords "house!" "house"
+				`shouldBe` (True, Perfect, [])
+			grade dictWords "house" "house?"
+				`shouldBe` (True, Perfect, [])
+			grade dictWords "house" "\"house.\""
+				`shouldBe` (True, Perfect, [])
+	describe "Validate typo answers" $ do
+		it "An edit distance of 1 should be acceptable" $ do
+			grade dictWords "house" "hhouse"
+				`shouldBe` (True, Typo, [((0,5),(0,6))])
