@@ -71,7 +71,10 @@ main = do
                 it "When a wrong word exists, ignore any typos" $
                         grade dictWords "It's my house" "It's mp horse"
                                 `shouldBe` (False, WrongWord, [((8,13),(8,13))])
-                it "Should have Unicode support" $
+                it "Should have Unicode support" $ do
                         grade dictWords "über is not English"
                                         "über is not Engrsh"
                                 `shouldBe` (False, WrongWord, [((12,19),(12,18))])
+                        grade dictWords "über 不是 English"
+                                        "über 不是 Engrsh"
+                                `shouldBe` (False, WrongWord, [((8,15),(8,14))])
