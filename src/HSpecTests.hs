@@ -19,11 +19,20 @@ main = do
 				`shouldBe` (True, Perfect, [])
 			grade dictWords "house!" "house"
 				`shouldBe` (True, Perfect, [])
-			grade dictWords "house" "house?"
+			grade dictWords "house." "house?"
 				`shouldBe` (True, Perfect, [])
 			grade dictWords "house" "\"house.\""
+				`shouldBe` (True, Perfect, [])
+			grade dictWords "it's" "it's" -- it's vs its
+				`shouldBe` (True, Perfect, [])
+		it "Multiple words should pass" $ do
+			grade dictWords "A house" "a house."
+				`shouldBe` (True, Perfect, [])
+			grade dictWords "Yet\" \" ??another house!" "yeT,ANOTHER.\"HoUSE"
 				`shouldBe` (True, Perfect, [])
 	describe "Validate typo answers" $ do
 		it "An edit distance of 1 should be acceptable" $ do
 			grade dictWords "house" "hhouse"
 				`shouldBe` (True, Typo, [((0,5),(0,6))])
+			grade dictWords "`house?!" "\"hhouse:"
+				`shouldBe` (True, Typo, [((1,6),(1,7))])
