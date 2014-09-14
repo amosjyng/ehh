@@ -58,3 +58,6 @@ main = do
                 it "A similar word that is also valid is wrong" $
                         grade dictWords "It's my house." "Its my house!"
                                 `shouldBe` (False, WrongWord, [((0,4),(0,3))])
+                it "When a wrong word exists, ignore any typos" $
+                        grade dictWords "It's my house" "It's mp horse"
+                                `shouldBe` (False, WrongWord, [((8,13),(8,13))])

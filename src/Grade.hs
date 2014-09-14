@@ -115,7 +115,7 @@ findRelevantHighlights highlights
         | isNothing imperfects = (Perfect, [])
         | otherwise = fromJust imperfects
         where byResult = map (\r -> (r, collectHighlights r highlights))
-                             [Typo, Missing, WrongWord]
+                             [Missing, WrongWord, Typo]
               imperfects = find (not . null . snd) byResult
 
 -- | Given a list of words in the English language, an expected string, and an
