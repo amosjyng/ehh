@@ -11,14 +11,13 @@ toLowerStr :: String -> String
 toLowerStr = map toLower
 
 -- | How does this word compare to the gold standard word?
-data Result = Perfect | Typo | Missing | Extra | WrongWord deriving (Eq)
+data Result = Perfect | Typo | Missing | WrongWord deriving (Eq)
 
 -- | Print a result like in the examples
 instance Show Result where
         show Perfect = "None"
         show Typo = "typo"
         show Missing = "missing"
-        show Extra = "extra"
         show WrongWord = "wrong_word"
 
 -- | Tells you whether a certain type of error is fine to have
@@ -117,12 +116,9 @@ findRelevantHighlights :: [ResultHighlight] -> (Result, [Highlight])
 findRelevantHighlights highlights
         | isNothing imperfects = (Perfect, [])
         | otherwise = fromJust imperfects
-        where typos = (Typo, collectHighlights Typo highlights)
-              missings = (Missing, collectHighlights Missing highlights)
-              extras = (Extra, collectHighlights Extra highlights)
-              wrongs = (WrongWord, collectHighlights WrongWord highlights)
-              imperfects = find (not . null . snd)
-                                [missings, extras, wrongs, typos]
+        where byResult = map (\r -> (r, collectHighlights r highlights))
+                             [Typo, Missing, WrongWord]
+              imperfects = find (not . null . snd) byResult
 
 -- | Given a list of words in the English language, an expected string, and an
 -- actual student string, return a tuple indicating whether the student answer

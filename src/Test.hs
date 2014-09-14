@@ -52,6 +52,9 @@ main = do
                                 `shouldBe` (False, WrongWord, [((8,10),(8,12))])
                         grade dictWords "This is my house." "this is mpr house!"
                                 `shouldBe` (False, WrongWord, [((8,10),(8,11))])
+                it "Two wrong words means nothing is highlighted" $
+                        grade dictWords "That is my house." "This is your house!"
+                                `shouldBe` (False, Perfect, [])
                 it "A similar word that is also valid is wrong" $
                         grade dictWords "It's my house." "Its my house!"
                                 `shouldBe` (False, WrongWord, [((0,4),(0,3))])
