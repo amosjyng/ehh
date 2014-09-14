@@ -15,7 +15,15 @@ build-type:          Simple
 cabal-version:       >=1.8
 
 executable grade
-  main-is:             grade.hs
-  -- other-modules:       
-  build-depends:       base ==4.6.*, split ==0.2.*
+  main-is:             Run.hs
+  other-modules:       Grade
+  build-depends:       base, split ==0.2.*
+  hs-source-dirs:      src
+
+test-suite tests
+  ghc-options:         -Wall
+  type: exitcode-stdio-1.0
+  main-is:             HSpecTests.hs
+  other-modules:       Grade
+  build-depends:       base, split ==0.2.*, hspec ==1.11.*
   hs-source-dirs:      src

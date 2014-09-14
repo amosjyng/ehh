@@ -1,7 +1,5 @@
-module Main (main) where
+module Grade (toLowerStr, Result(..), grade) where
 
-import System.IO
-import System.Environment
 import Data.List (find)
 import Data.List.Split
 import Data.Char
@@ -124,19 +122,11 @@ findRelevantHighlights highlights
               imperfects = find (not . null . snd)
                                 [missings, extras, wrongs, typos]
 
--- | From commandline arguments, see if the student answer reasonably matches
--- the expected correct answer.
---
--- Usage: grade <correct answer> <student answer> <dictionary file>
-main :: IO ()
-main = do
-        args <- getArgs
-        dict <- readFile $ args !! 2
-        let correctAnswer = splitIntoWords $ args !! 0
-        let studentAnswer = splitIntoWords $ args !! 1
-        let dictWords = map toLowerStr $ lines dict
-        let results = map (wordsMatch dictWords)
-                        $ zip correctAnswer studentAnswer
-        let relevantHighlights = findRelevantHighlights results
-        print (all isFine $ map fst results, fst relevantHighlights,
-               snd relevantHighlights) 
+grade :: [String] -> String -> String -> (Bool, Result, [Highlight])
+grade dictWords correctAnswer studentAnswer =
+        (all isFine $ map fst results, fst highlights, snd highlights)
+        where correctTokens = splitIntoWords correctAnswer
+              studentTokens = splitIntoWords studentAnswer
+              results = map (wordsMatch dictWords)
+                      $ zip correctTokens studentTokens
+              highlights = findRelevantHighlights results

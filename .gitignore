@@ -1,4 +1,5 @@
 *.swp
+*.txt
 .project
 .settings
 .dist-buildwrapper
