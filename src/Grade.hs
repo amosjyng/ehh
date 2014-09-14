@@ -1,9 +1,9 @@
 module Grade (toLowerStr, Result(..), grade) where
 
-import Data.List (find)
-import Data.List.Split
-import Data.Char
-import Data.Maybe (isNothing, fromJust)
+import           Data.Char
+import           Data.List       (find)
+import           Data.List.Split
+import           Data.Maybe      (fromJust, isNothing)
 
 
 -- | Convert an entire string to lowercase
@@ -29,7 +29,7 @@ isFine r = r == Perfect || r == Typo
 type Highlight = ((Int, Int), (Int, Int))
 
 -- | Every Result other than Perfect should have a highlight to go with it
-type ResultHighlight = (Result, Maybe Highlight) 
+type ResultHighlight = (Result, Maybe Highlight)
 
 -- | Every Word is a String with a location
 data Word = Word String (Int, Int) deriving (Show)
@@ -67,7 +67,7 @@ splitIntoWords sentence = filter (not . null . wordStr) sentenceWords
               sentenceWords = third $ foldl formWordList (False, 0, []) tokens
 
 -- | If the first two letters of each string are swapped, returns minimum edit
--- distance of the rest of the strings. If the first two letters are not 
+-- distance of the rest of the strings. If the first two letters are not
 -- swapped, returns maxBound to ignore the swap
 swapDistance :: String -> String -> Int
 swapDistance word1 word2

@@ -23,7 +23,7 @@ executable grade
 test-suite tests
   ghc-options:         -Wall
   type: exitcode-stdio-1.0
-  main-is:             HSpecTests.hs
+  main-is:             Test.hs
   other-modules:       Grade
   build-depends:       base, split ==0.2.*, hspec ==1.11.*
   hs-source-dirs:      src
