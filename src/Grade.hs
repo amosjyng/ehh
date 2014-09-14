@@ -109,11 +109,18 @@ wordsMatch dictionaryWords correctWord studentWord
 collectHighlights :: Result -> [ResultHighlight] -> [Highlight]
 collectHighlights r = map (fromJust . snd) . filter (\rh -> fst rh == r)
 
+-- | Check if there are multiple wrong things (missing or wrong words) and if
+-- so, return no highlights. Otherwise return highlights as they are
+multipleWrongs :: (Result, [Highlight]) -> (Result, [Highlight])
+multipleWrongs (Missing,   _:_:_) = (Perfect, [])
+multipleWrongs (WrongWord, _:_:_) = (Perfect, [])
+multipleWrongs rhs = rhs
+
 -- | Find the most relevant highlights to show
 findRelevantHighlights :: [ResultHighlight] -> (Result, [Highlight])
 findRelevantHighlights highlights
         | isNothing imperfects = (Perfect, [])
-        | otherwise = fromJust imperfects
+        | otherwise = (multipleWrongs . fromJust) imperfects
         where byResult = map (\r -> (r, collectHighlights r highlights))
                              [Missing, WrongWord, Typo]
               imperfects = find (not . null . snd) byResult
