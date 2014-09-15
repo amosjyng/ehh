@@ -133,28 +133,27 @@ findRelevantHighlights highlights
 -- d: edit distance of sentence
 -- resultHs: result highlights so far
 -- cToks, sToks: correct and student tokens
--- sPos: where we are in the student sentence
 -- endPos: the end of the student sentence
-getResults :: [String] -> (Int, [ResultHighlight]) -> [Word] -> [Word] -> Int -> Int -> (Int, [ResultHighlight])
-getResults dictWords (d, resultHs) cToks sToks sPos endPos
+getResults :: [String] -> (Int, [ResultHighlight]) -> [Word] -> [Word] -> Int -> (Int, [ResultHighlight])
+getResults dictWords (d, resultHs) cToks sToks endPos
         | null cToks = (d, resultHs) -- we're all done
         | null sToks = newMissing -- last word is missing
         -- either perfect or a typo, carry on
-        | isFine $ fst resultH = recurse (d, snd newResult) restST newSPos
+        | isFine $ fst resultH = recurse (d, snd newResult) restST
         -- decide wrong/missing word by comparing sentence edit distance
         | otherwise = minimumBy (compare `on` fst)
-                                [recurse newResult  restST newSPos,
-                                 recurse newMissing sToks  sPos]
+                                [recurse newResult  restST,
+                                 recurse newMissing sToks]
         where cTok:restCT = cToks -- correct tokens
               sTok:restST = sToks -- student tokens
               resultH  = wordsMatch dictWords cTok sTok
               missingH = (Missing, Just (range cTok, (sPos, sPos)))
               newResult  = (1 + d, resultHs ++ [resultH])
               newMissing = (1 + d, resultHs ++ [missingH])
-              newSPos
-                | null restST = endPos -- end of student string
-                | otherwise   = (fst . range . head) restST
-              recurse = \pc st sp -> getResults dictWords pc restCT st sp endPos
+              sPos
+                | null sToks = endPos -- end of student string
+                | otherwise   = (fst . range) sTok
+              recurse = \pc st -> getResults dictWords pc restCT st endPos
 
 -- | Given a list of words in the English language, an expected string, and an
 -- actual student string, return a tuple indicating whether the student answer
@@ -169,6 +168,6 @@ grade dictWords correctAnswer studentAnswer
                 (all isFine $ map fst results, fst highlights, snd highlights)
         where correctTokens = splitIntoWords correctAnswer
               studentTokens = splitIntoWords studentAnswer
-              results = snd $ getResults dictWords (0, [])
-                              correctTokens studentTokens 0 (length studentAnswer)
+              results = snd $ getResults dictWords (0, []) correctTokens
+                                         studentTokens $ length studentAnswer
               highlights = findRelevantHighlights results

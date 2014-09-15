@@ -84,7 +84,7 @@ main = do
                                 `shouldBe` (False, Missing, [((0,5),(0,0))])
                 it "Punctuation should be ignored" $
                         grade dictWords "house" ".,\"?"
-                                `shouldBe` (False, Missing, [((0,5),(0,0))])
+                                `shouldBe` (False, Missing, [((0,5),(4,4))])
                 it "Input with a missing word should be detected" $
                         grade dictWords "This is my house."
                                         "This my house!"
