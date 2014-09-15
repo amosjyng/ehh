@@ -135,7 +135,7 @@ getResults dictWords (distance, resultHighlights) correctTokens studentTokens sP
         | isFine result = getResults dictWords (distance, newHighlights)
                                      restCorrectTokens restStudentTokens nextSPos
         | otherwise =
-                minimumBy (\drhs1 drhs2 -> fst drhs1 `compare` fst drhs2)
+                minimumBy (compare `on` fst)
                         [getResults dictWords (1 + distance, resultHighlights ++ [resultHighlight]) (tail correctTokens) (tail studentTokens) nextSPos,
                          getResults dictWords (1 + distance, resultHighlights ++ [missingHighlight]) (tail correctTokens) studentTokens sPos]
         where correctToken:restCorrectTokens = correctTokens
