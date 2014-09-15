@@ -129,23 +129,23 @@ findRelevantHighlights highlights
 -- | Finds results for all words, figuring out along the way if it's a word is
 -- missing or just wrong
 getResults :: [String] -> (Int, [ResultHighlight]) -> [Word] -> [Word] -> Int -> (Int, [ResultHighlight])
-getResults dictWords (distance, resultHs) correctTokens studentTokens sPos
-        | null correctTokens = (distance, resultHs) -- stop here
-        | null studentTokens = newMissing
-        | isFine $ fst resultH =
-                recurse (distance, snd newResult) restST nextSPos
-        | otherwise =
-                minimumBy (compare `on` fst)
-                        [recurse newResult restST nextSPos,
-                         recurse newMissing studentTokens sPos]
-        where correctT:restCT = correctTokens
-              studentT:restST = studentTokens
-              resultH  = wordsMatch dictWords correctT studentT
-              missingH = (Missing, Just (range correctT, (sPos, sPos)))
-              newResult  = (1 + distance, resultHs ++ [resultH])
-              newMissing = (1 + distance, resultHs ++ [missingH])
-              nextSPos = (fst . range . head) restST
-              recurse = \pc st sp -> getResults dictWords pc restCT st sp
+getResults dictWords (d, resultHs) cToks sToks sPos
+        | null cToks = (d, resultHs) -- we're all done
+        | null sToks = newMissing -- last word is missing
+        -- either perfect or a typo, carry on
+        | isFine $ fst resultH = recurse (d, snd newResult) restST newSPos
+        -- decide wrong/missing word by comparing sentence edit distance
+        | otherwise = minimumBy (compare `on` fst)
+                                [recurse newResult  restST newSPos,
+                                 recurse newMissing sToks  sPos]
+        where cTok:restCT = cToks -- correct tokens
+              sTok:restST = sToks -- student tokens
+              resultH  = wordsMatch dictWords cTok sTok
+              missingH = (Missing, Just (range cTok, (sPos, sPos)))
+              newResult  = (1 + d, resultHs ++ [resultH])
+              newMissing = (1 + d, resultHs ++ [missingH])
+              newSPos = (fst . range . head) restST
+              recurse = \pc -> getResults dictWords pc restCT
 
 -- | Given a list of words in the English language, an expected string, and an
 -- actual student string, return a tuple indicating whether the student answer
