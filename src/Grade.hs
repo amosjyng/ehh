@@ -128,8 +128,15 @@ findRelevantHighlights highlights
 
 -- | Finds results for all words, figuring out along the way if it's a word is
 -- missing or just wrong
-getResults :: [String] -> (Int, [ResultHighlight]) -> [Word] -> [Word] -> Int -> (Int, [ResultHighlight])
-getResults dictWords (d, resultHs) cToks sToks sPos
+--
+-- dictWords: List of strings in the English dictionary
+-- d: edit distance of sentence
+-- resultHs: result highlights so far
+-- cToks, sToks: correct and student tokens
+-- sPos: where we are in the student sentence
+-- endPos: the end of the student sentence
+getResults :: [String] -> (Int, [ResultHighlight]) -> [Word] -> [Word] -> Int -> Int -> (Int, [ResultHighlight])
+getResults dictWords (d, resultHs) cToks sToks sPos endPos
         | null cToks = (d, resultHs) -- we're all done
         | null sToks = newMissing -- last word is missing
         -- either perfect or a typo, carry on
@@ -144,8 +151,10 @@ getResults dictWords (d, resultHs) cToks sToks sPos
               missingH = (Missing, Just (range cTok, (sPos, sPos)))
               newResult  = (1 + d, resultHs ++ [resultH])
               newMissing = (1 + d, resultHs ++ [missingH])
-              newSPos = (fst . range . head) restST
-              recurse = \pc -> getResults dictWords pc restCT
+              newSPos
+                | null restST = endPos -- end of student string
+                | otherwise   = (fst . range . head) restST
+              recurse = \pc st sp -> getResults dictWords pc restCT st sp endPos
 
 -- | Given a list of words in the English language, an expected string, and an
 -- actual student string, return a tuple indicating whether the student answer
@@ -160,5 +169,6 @@ grade dictWords correctAnswer studentAnswer
                 (all isFine $ map fst results, fst highlights, snd highlights)
         where correctTokens = splitIntoWords correctAnswer
               studentTokens = splitIntoWords studentAnswer
-              results = snd $ getResults dictWords (0, []) correctTokens studentTokens 0
+              results = snd $ getResults dictWords (0, [])
+                              correctTokens studentTokens 0 (length studentAnswer)
               highlights = findRelevantHighlights results

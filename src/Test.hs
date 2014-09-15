@@ -92,6 +92,10 @@ main = do
                 it "Multiple missing words shouldn't be highlighted" $
                         grade dictWords "This is my house." "This house!"
                                 `shouldBe` (False, Perfect, [])
-                it "Should be able to distinguish typos from missing words" $
+                it "Should be able to distinguish typos from missing words" $ do
                         grade dictWords "This is my house" "This si house"
                                 `shouldBe` (False, Missing, [((8,10),(8,8))])
+                        grade dictWords "This is my house" "This si my"
+                                `shouldBe` (False, Missing, [((11,16),(10,10))])
+                        grade dictWords "This is my house" "si my house"
+                                `shouldBe` (False, Missing, [((0,4),(0,0))])
