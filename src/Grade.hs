@@ -1,6 +1,7 @@
 module Grade (toLowerStr, Result(..), grade) where
 
 import           Data.Char
+import           Data.Function (on)
 import           Data.List       (find, minimumBy)
 import           Data.List.Split
 import           Data.Maybe      (fromJust, isNothing)
@@ -128,23 +129,23 @@ findRelevantHighlights highlights
 -- | Finds results for all words, figuring out along the way if it's a word is
 -- missing or just wrong
 getResults :: [String] -> (Int, [ResultHighlight]) -> [Word] -> [Word] -> Int -> (Int, [ResultHighlight])
-getResults dictWords (distance, resultHighlights) correctTokens studentTokens sPos
-        | null correctTokens = (distance, resultHighlights) -- stop here
-        | null studentTokens =
-                (distance + 1, resultHighlights ++ [missingHighlight])
-        | isFine result = getResults dictWords (distance, newHighlights)
-                                     restCorrectTokens restStudentTokens nextSPos
+getResults dictWords (distance, resultHs) correctTokens studentTokens sPos
+        | null correctTokens = (distance, resultHs) -- stop here
+        | null studentTokens = newMissing
+        | isFine $ fst resultH =
+                recurse (distance, snd newResult) restST nextSPos
         | otherwise =
                 minimumBy (compare `on` fst)
-                        [getResults dictWords (1 + distance, resultHighlights ++ [resultHighlight]) (tail correctTokens) (tail studentTokens) nextSPos,
-                         getResults dictWords (1 + distance, resultHighlights ++ [missingHighlight]) (tail correctTokens) studentTokens sPos]
-        where correctToken:restCorrectTokens = correctTokens
-              studentToken:restStudentTokens = studentTokens
-              resultHighlight = wordsMatch dictWords correctToken studentToken
-              missingHighlight = (Missing, Just (range correctToken, (sPos, sPos)))
-              newHighlights = resultHighlights ++ [resultHighlight]
-              nextSPos = (fst . range . head) restStudentTokens
-              result = fst resultHighlight
+                        [recurse newResult restST nextSPos,
+                         recurse newMissing studentTokens sPos]
+        where correctT:restCT = correctTokens
+              studentT:restST = studentTokens
+              resultH  = wordsMatch dictWords correctT studentT
+              missingH = (Missing, Just (range correctT, (sPos, sPos)))
+              newResult  = (1 + distance, resultHs ++ [resultH])
+              newMissing = (1 + distance, resultHs ++ [missingH])
+              nextSPos = (fst . range . head) restST
+              recurse = \pc st sp -> getResults dictWords pc restCT st sp
 
 -- | Given a list of words in the English language, an expected string, and an
 -- actual student string, return a tuple indicating whether the student answer
