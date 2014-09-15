@@ -1,7 +1,7 @@
 module Grade (toLowerStr, Result(..), grade) where
 
 import           Data.Char
-import           Data.List       (find)
+import           Data.List       (find, minimumBy)
 import           Data.List.Split
 import           Data.Maybe      (fromJust, isNothing)
 
@@ -125,14 +125,39 @@ findRelevantHighlights highlights
                              [Missing, WrongWord, Typo]
               imperfects = find (not . null . snd) byResult
 
+-- | Finds results for all words, figuring out along the way if it's a word is
+-- missing or just wrong
+getResults :: [String] -> (Int, [ResultHighlight]) -> [Word] -> [Word] -> Int -> (Int, [ResultHighlight])
+getResults dictWords (distance, resultHighlights) correctTokens studentTokens sPos
+        | null correctTokens = (distance, resultHighlights) -- stop here
+        | null studentTokens =
+                (distance + 1, resultHighlights ++ [missingHighlight])
+        | isFine result = getResults dictWords (distance, newHighlights)
+                                     restCorrectTokens restStudentTokens nextSPos
+        | otherwise =
+                minimumBy (\drhs1 drhs2 -> fst drhs1 `compare` fst drhs2)
+                        [getResults dictWords (1 + distance, resultHighlights ++ [resultHighlight]) (tail correctTokens) (tail studentTokens) nextSPos,
+                         getResults dictWords (1 + distance, resultHighlights ++ [missingHighlight]) (tail correctTokens) studentTokens sPos]
+        where correctToken:restCorrectTokens = correctTokens
+              studentToken:restStudentTokens = studentTokens
+              resultHighlight = wordsMatch dictWords correctToken studentToken
+              missingHighlight = (Missing, Just (range correctToken, (sPos, sPos)))
+              newHighlights = resultHighlights ++ [resultHighlight]
+              nextSPos = (fst . range . head) restStudentTokens
+              result = fst resultHighlight
+
 -- | Given a list of words in the English language, an expected string, and an
 -- actual student string, return a tuple indicating whether the student answer
 -- matches the correct answer within acceptable bounds, what kind of mistakes
 -- were made (if any), and where the mistakes are located
 grade :: [String] -> String -> String -> (Bool, Result, [Highlight])
-grade dictWords correctAnswer studentAnswer =
-        (all isFine $ map fst results, fst highlights, snd highlights)
+grade dictWords correctAnswer studentAnswer
+        -- if missing more than two words, don't need to highlight results, so
+        -- skip computation
+        | length correctTokens > length studentTokens + 1 = (False, Perfect, [])
+        | otherwise =
+                (all isFine $ map fst results, fst highlights, snd highlights)
         where correctTokens = splitIntoWords correctAnswer
               studentTokens = splitIntoWords studentAnswer
-              results = zipWith (wordsMatch dictWords) correctTokens studentTokens
+              results = snd $ getResults dictWords (0, []) correctTokens studentTokens 0
               highlights = findRelevantHighlights results

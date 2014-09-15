@@ -78,3 +78,20 @@ main = do
                         grade dictWords "über 不是 English"
                                         "über 不是 Engrsh"
                                 `shouldBe` (False, WrongWord, [((8,15),(8,14))])
+        describe "Invalidate missing words" $ do
+                it "Missing input should be marked as such" $
+                        grade dictWords "house" ""
+                                `shouldBe` (False, Missing, [((0,5),(0,0))])
+                it "Punctuation should be ignored" $
+                        grade dictWords "house" ".,\"?"
+                                `shouldBe` (False, Missing, [((0,5),(0,0))])
+                it "Input with a missing word should be detected" $
+                        grade dictWords "This is my house."
+                                        "This my house!"
+                                `shouldBe` (False, Missing, [((5,7),(5,5))])
+                it "Multiple missing words shouldn't be highlighted" $
+                        grade dictWords "This is my house." "This house!"
+                                `shouldBe` (False, Perfect, [])
+                it "Should be able to distinguish typos from missing words" $
+                        grade dictWords "This is my house" "This si house"
+                                `shouldBe` (False, Missing, [((8,10),(8,8))])
