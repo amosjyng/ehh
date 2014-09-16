@@ -153,7 +153,7 @@ getResults dictWords (d, resultHs) cToks sToks endPos
               sPos
                 | null sToks = endPos -- end of student string
                 | otherwise  = (fst . range) sTok
-              recurse = \pc st -> getResults dictWords pc restCT st endPos
+              recurse pc st = getResults dictWords pc restCT st endPos
 
 -- | Given a list of words in the English language, an expected string, and an
 -- actual student string, return a tuple indicating whether the student answer
