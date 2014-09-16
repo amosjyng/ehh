@@ -17,9 +17,9 @@ data Result = Perfect | Typo | Missing | WrongWord deriving (Eq)
 -- | Print a result like in the examples
 instance Show Result where
         show Perfect = "None"
-        show Typo = "typo"
-        show Missing = "missing"
-        show WrongWord = "wrong_word"
+        show Typo = "\"typo\""
+        show Missing = "\"missing\""
+        show WrongWord = "\"wrong_word\""
 
 -- | Tells you whether a certain type of error is fine to have
 isFine :: Result -> Bool
